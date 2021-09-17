@@ -1,0 +1,17 @@
+{% package templates %}
+
+{% import "github.com/joe-davidson1802/go-pact-consumer/models" %}
+{% import "fmt" %}
+
+{% templ TimePage(times []models.TimeResponse) %}
+<html>
+	<body>
+		<h1>{%= "Times" %}</h1>
+		<ul>
+		{% for _, t := range times %}
+			<li>{%= fmt.Sprintf("%s: %s", t.Zone, t.Time.Format("3:04PM")) %}</li>
+		{% endfor %}
+		</ul>
+	</body>
+</html>
+{% endtempl %}

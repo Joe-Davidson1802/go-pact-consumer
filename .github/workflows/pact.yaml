@@ -1,0 +1,39 @@
+name: Pact Consumer
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  pact:
+    runs-on: ubuntu-latest
+    name: Pact Tests
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+
+      - name: Install Dependencies
+        run: |
+          # Install Go.
+          curl -L -o go1.16.6.linux-amd64.tar.gz https://golang.org/dl/go1.16.6.linux-amd64.tar.gz
+          rm -rf /usr/local/go && tar -C /usr/local -xzf go1.16.6.linux-amd64.tar.gz
+          PATH="$PATH:/usr/local/go/bin"
+
+          # Install Pact.
+          curl -LO https://github.com/pact-foundation/pact-ruby-standalone/releases/download/v1.88.65/pact-1.88.65-linux-x86_64.tar.gz
+          rm -rf /usr/local/pact && tar -C /usr/local -xzf pact-1.88.65-linux-x86_64.tar.gz
+          PATH="$PATH:/usr/local/pact/bin"
+
+      - uses: actions/cache@v2
+        with:
+          path: |
+            ~/.cache/go-build
+            ~/go/pkg/mod
+          key: ${{ runner.os }}-go-${{ hashFiles('**/go.sum') }}
+          restore-keys: |
+            ${{ runner.os }}-go-
+
+      - name: Run Tests
+        run: go test ./...
