@@ -1,14 +1,17 @@
-name: Pact Consumer
+name: Pact
 
 on:
   push:
     branches:
       - main
 
+env:
+  PACT_BROKER_BASE_URL:  ${{ secrets.PACT_BROKER_BASE_URL }}
+  PACT_BROKER_TOKEN:  ${{ secrets.PACT_BROKER_TOKEN }}
 jobs:
   pact:
     runs-on: ubuntu-latest
-    name: Pact Tests
+    name: Pact
 
     steps:
       - name: Checkout
@@ -18,13 +21,13 @@ jobs:
         run: |
           # Install Go.
           curl -L -o go1.16.6.linux-amd64.tar.gz https://golang.org/dl/go1.16.6.linux-amd64.tar.gz
-          rm -rf /usr/local/go && tar -C /usr/local -xzf go1.16.6.linux-amd64.tar.gz
-          PATH="$PATH:/usr/local/go/bin"
+          rm -rf /usr/local/go && sudo tar -C /usr/local -xzf go1.16.6.linux-amd64.tar.gz
+          echo "$PATH:/usr/local/go/bin" >> $GITHUB_PATH
 
           # Install Pact.
           curl -LO https://github.com/pact-foundation/pact-ruby-standalone/releases/download/v1.88.65/pact-1.88.65-linux-x86_64.tar.gz
-          rm -rf /usr/local/pact && tar -C /usr/local -xzf pact-1.88.65-linux-x86_64.tar.gz
-          PATH="$PATH:/usr/local/pact/bin"
+          rm -rf /usr/local/pact && sudo tar -C /usr/local -xzf pact-1.88.65-linux-x86_64.tar.gz
+          echo "$PATH:/usr/local/pact/bin" >> $GITHUB_PATH
 
       - uses: actions/cache@v2
         with:
@@ -34,6 +37,14 @@ jobs:
           key: ${{ runner.os }}-go-${{ hashFiles('**/go.sum') }}
           restore-keys: |
             ${{ runner.os }}-go-
+            
+      - name: Extract version
+        shell: bash
+        run: |
+          echo "##[set-output name=hash;]$(echo $(git rev-parse --short "$GITHUB_SHA"))"
+        id: extract_branch
 
       - name: Run Tests
+        env:
+          VERSION: ${{ steps.extract_branch.outputs.hash }}
         run: go test ./...
